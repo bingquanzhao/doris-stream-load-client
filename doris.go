@@ -4,11 +4,13 @@ package doris_stream_load_client
 import (
 	"bytes"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/bingquanzhao/doris-stream-load-client/pkg/client"
 	"github.com/bingquanzhao/doris-stream-load-client/pkg/config"
 	"github.com/bingquanzhao/doris-stream-load-client/pkg/load"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -34,6 +36,11 @@ type Format = config.Format
 type BatchMode = config.BatchMode
 type Retry = config.Retry
 
+// Log aliases
+type LogLevel = log.Level
+type LogFunc = log.LogFunc
+type ContextLogger = log.ContextLogger
+
 // Load aliases
 type LoadResponse = load.LoadResponse
 type LoadStatus = load.LoadStatus
@@ -53,6 +60,12 @@ const (
 	// Load status constants
 	SUCCESS = load.SUCCESS
 	FAILURE = load.FAILURE
+	
+	// Log level constants
+	LogLevelDebug = log.LevelDebug
+	LogLevelInfo  = log.LevelInfo
+	LogLevelWarn  = log.LevelWarn
+	LogLevelError = log.LevelError
 )
 
 // NewRetry creates a new retry configuration
@@ -113,3 +126,83 @@ func JSONReader(data interface{}) (io.Reader, error) {
 //    client.Load(strings.NewReader("your data"))
 //
 // This design follows Go's philosophy of simple, composable interfaces. 
+
+// ================================
+// Log Control Functions
+// ================================
+// These functions provide unified access to logging configuration
+// without requiring users to import the internal log package
+
+// SetLogLevel sets the minimum log level for the SDK
+// Available levels: LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError
+//
+// Example:
+//   doris.SetLogLevel(doris.LogLevelError) // Only show errors
+//   doris.SetLogLevel(doris.LogLevelInfo)  // Show info, warn, and error (recommended for production)
+func SetLogLevel(level LogLevel) {
+	log.SetLevel(level)
+}
+
+// SetLogOutput sets the output destination for SDK logs
+//
+// Example:
+//   file, _ := os.OpenFile("doris-sdk.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+//   doris.SetLogOutput(file)
+func SetLogOutput(output *os.File) {
+	log.SetOutput(output)
+}
+
+// DisableLogging completely disables all SDK logging
+// This is equivalent to setting a very high log level
+func DisableLogging() {
+	log.SetLevel(log.Level(999))
+}
+
+// SetCustomLogFunc allows users to integrate their own logging systems
+// 
+// Example with logrus:
+//   logger := logrus.New()
+//   doris.SetCustomLogFunc(doris.LogLevelError, logger.Errorf)
+//   doris.SetCustomLogFunc(doris.LogLevelInfo, logger.Infof)
+func SetCustomLogFunc(level LogLevel, fn LogFunc) {
+	switch level {
+	case log.LevelDebug:
+		log.SetDebugFunc(fn)
+	case log.LevelInfo:
+		log.SetInfoFunc(fn)
+	case log.LevelWarn:
+		log.SetWarnFunc(fn)
+	case log.LevelError:
+		log.SetErrorFunc(fn)
+	}
+}
+
+// SetCustomLogFuncs allows setting all log functions at once
+//
+// Example:
+//   logger := logrus.New()
+//   doris.SetCustomLogFuncs(logger.Debugf, logger.Infof, logger.Warnf, logger.Errorf)
+func SetCustomLogFuncs(debugFn, infoFn, warnFn, errorFn LogFunc) {
+	if debugFn != nil {
+		log.SetDebugFunc(debugFn)
+	}
+	if infoFn != nil {
+		log.SetInfoFunc(infoFn)
+	}
+	if warnFn != nil {
+		log.SetWarnFunc(warnFn)
+	}
+	if errorFn != nil {
+		log.SetErrorFunc(errorFn)
+	}
+}
+
+// NewContextLogger creates a context logger with the given context string
+// This is useful for adding context information to logs in concurrent scenarios
+//
+// Example:
+//   workerLogger := doris.NewContextLogger("Worker-1")
+//   workerLogger.Infof("Processing batch %d", batchID)
+func NewContextLogger(context string) *ContextLogger {
+	return log.NewContextLogger(context)
+} 

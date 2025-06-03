@@ -9,7 +9,6 @@ import (
 	"time"
 
 	doris "github.com/bingquanzhao/doris-stream-load-client"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 const (
@@ -21,9 +20,10 @@ const (
 func RunJSONExample() {
 	fmt.Println("=== Production-Level JSON Data Loading Demo ===")
 	
-	log.SetLevel(log.LevelInfo)
+	doris.SetLogLevel(doris.LogLevelInfo)
 	
-	log.Infof("Starting JSON loading demo with %d order records", JSON_BATCH_SIZE)
+	logger := doris.NewContextLogger("JSONDemo")
+	logger.Infof("Starting JSON loading demo with %d order records", JSON_BATCH_SIZE)
 	
 	// Production-level JSON configuration
 	setting := doris.NewLoadSetting().
@@ -43,11 +43,11 @@ func RunJSONExample() {
 	// Create client with automatic validation
 	client, err := doris.NewLoadClient(setting)
 	if err != nil {
-		log.Errorf("Failed to create load client: %v", err)
+		logger.Errorf("Failed to create load client: %v", err)
 		return
 	}
 	
-	log.Infof("✅ JSON load client created successfully")
+	logger.Infof("✅ JSON load client created successfully")
 	
 	// Generate realistic JSON order data using unified data generator
 	config := DataGeneratorConfig{
@@ -57,7 +57,7 @@ func RunJSONExample() {
 	jsonData := GenerateOrderJSON(config)
 	
 	// Perform the JSON load operation
-	log.Infof("Starting JSON load operation for %d order records...", JSON_BATCH_SIZE)
+	logger.Infof("Starting JSON load operation for %d order records...", JSON_BATCH_SIZE)
 	loadStart := time.Now()
 	
 	response, err := client.Load(doris.StringReader(jsonData))

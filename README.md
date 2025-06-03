@@ -151,6 +151,40 @@ setting.
 	AddOption("timezone", "Asia/Shanghai")     // 时区
 ```
 
+### 日志控制
+
+**✨ 统一API设计** - 无需导入额外包，所有日志功能都通过主包提供：
+
+```go
+// 设置日志级别（只显示错误）
+doris.SetLogLevel(doris.LogLevelError)
+
+// 可用级别
+doris.SetLogLevel(doris.LogLevelDebug)  // 显示所有日志
+doris.SetLogLevel(doris.LogLevelInfo)   // 显示 Info, Warn, Error（生产推荐）
+doris.SetLogLevel(doris.LogLevelWarn)   // 显示 Warn, Error
+doris.SetLogLevel(doris.LogLevelError)  // 只显示 Error
+
+// 完全禁用日志
+doris.DisableLogging()
+
+// 设置日志输出到文件
+file, _ := os.OpenFile("doris-sdk.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+doris.SetLogOutput(file)
+
+// 创建带上下文的日志记录器（适用于并发场景）
+logger := doris.NewContextLogger("MyWorker-1")
+logger.Infof("Processing batch %d", batchID)
+
+// 集成自定义日志系统（如 logrus）
+logger := logrus.New()
+doris.SetCustomLogFunc(doris.LogLevelError, logger.Errorf)
+doris.SetCustomLogFunc(doris.LogLevelInfo, logger.Infof)
+
+// 或一次性设置所有级别
+doris.SetCustomLogFuncs(logger.Debugf, logger.Infof, logger.Warnf, logger.Errorf)
+```
+
 ## 🔄 并发使用
 
 客户端是线程安全的，可以在多个 goroutine 中安全使用：

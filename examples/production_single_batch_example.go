@@ -9,7 +9,6 @@ import (
 	"time"
 
 	doris "github.com/bingquanzhao/doris-stream-load-client"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 const (
@@ -22,9 +21,10 @@ func RunSingleBatchExample() {
 	fmt.Println("=== Production-Level Large Batch Loading Demo ===")
 	
 	// Production logging level
-	log.SetLevel(log.LevelInfo)
+	doris.SetLogLevel(doris.LogLevelInfo)
 	
-	log.Infof("Starting large batch loading demo with %d order records", BATCH_SIZE)
+	logger := doris.NewContextLogger("SingleBatch")
+	logger.Infof("Starting large batch loading demo with %d order records", BATCH_SIZE)
 	
 	// Production-level configuration
 	setting := doris.NewLoadSetting().
@@ -43,11 +43,11 @@ func RunSingleBatchExample() {
 	// Create client with automatic validation
 	client, err := doris.NewLoadClient(setting)
 	if err != nil {
-		log.Errorf("Failed to create load client: %v", err)
+		logger.Errorf("Failed to create load client: %v", err)
 		return
 	}
 	
-	log.Infof("✅ Load client created successfully")
+	logger.Infof("✅ Load client created successfully")
 	
 	// Generate large batch of realistic order data using unified data generator
 	config := DataGeneratorConfig{
@@ -57,7 +57,7 @@ func RunSingleBatchExample() {
 	data := GenerateOrderCSV(config)
 	
 	// Perform the load operation
-	log.Infof("Starting load operation for %d order records...", BATCH_SIZE)
+	logger.Infof("Starting load operation for %d order records...", BATCH_SIZE)
 	loadStart := time.Now()
 	
 	response, err := client.Load(doris.StringReader(data))

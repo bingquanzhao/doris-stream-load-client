@@ -12,7 +12,6 @@ import (
 	"time"
 
 	doris "github.com/bingquanzhao/doris-stream-load-client"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 const (
@@ -44,8 +43,6 @@ type GlobalStats struct {
 func RunConcurrentExample() {
 	fmt.Println("=== Production-Level Concurrent Large-Scale Loading Demo ===")
 
-	log.SetLevel(log.LevelInfo)
-
 	fmt.Printf("📊 Scale: %d total records, %d workers, %d records per worker\n",
 		TOTAL_RECORDS, NUM_WORKERS, RECORDS_PER_WORKER)
 
@@ -66,11 +63,11 @@ func RunConcurrentExample() {
 	// Create shared client (thread-safe)
 	client, err := doris.NewLoadClient(setting)
 	if err != nil {
-		log.Errorf("Failed to create load client: %v", err)
+		fmt.Printf("Failed to create load client: %v\n", err)
 		return
 	}
 
-	log.Infof("✅ Load client created successfully")
+	fmt.Println("✅ Load client created successfully")
 
 	// Initialize global statistics and synchronization
 	var globalStats GlobalStats
@@ -123,14 +120,12 @@ func RunConcurrentExample() {
 func loadWorker(workerID int, client *doris.DorisLoadClient, globalStats *GlobalStats, wg *sync.WaitGroup, resultChan chan<- WorkerStats) {
 	defer wg.Done()
 
-	contextLogger := log.NewContextLogger(fmt.Sprintf("LoadWorker-%d", workerID))
-
 	stats := WorkerStats{
 		WorkerID: workerID,
 		Success:  false,
 	}
 
-	contextLogger.Infof("Starting load operation for %d records", RECORDS_PER_WORKER)
+	fmt.Printf("Starting load operation for %d records\n", RECORDS_PER_WORKER)
 	overallStart := time.Now()
 
 	// Generate data for this worker using unified data generator
@@ -143,7 +138,7 @@ func loadWorker(workerID int, client *doris.DorisLoadClient, globalStats *Global
 	stats.DataSize = int64(len(data))
 
 	// Perform the load operation
-	contextLogger.Infof("Starting load operation...")
+	fmt.Println("Starting load operation...")
 	loadStart := time.Now()
 
 	response, err := client.Load(doris.StringReader(data))
@@ -176,7 +171,7 @@ func loadWorker(workerID int, client *doris.DorisLoadClient, globalStats *Global
 	}
 
 	totalTime := time.Since(overallStart)
-	contextLogger.Infof("Worker completed in %v (load: %v)", totalTime, stats.LoadTime)
+	fmt.Printf("Worker completed in %v (load: %v)\n", totalTime, stats.LoadTime)
 
 	resultChan <- stats
 }

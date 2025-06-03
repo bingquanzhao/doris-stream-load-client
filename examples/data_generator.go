@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+	doris "github.com/bingquanzhao/doris-stream-load-client"
 )
 
 // Common data for generating realistic order test data
@@ -50,7 +50,7 @@ type DataGeneratorConfig struct {
 
 // GenerateOrderCSV creates realistic order data in CSV format (unified for all examples)
 func GenerateOrderCSV(config DataGeneratorConfig) string {
-	contextLogger := log.NewContextLogger(config.ContextName)
+	contextLogger := doris.NewContextLogger(config.ContextName)
 	contextLogger.Infof("Generating %d order records...", config.BatchSize)
 	start := time.Now()
 
@@ -119,7 +119,7 @@ func GenerateOrderCSV(config DataGeneratorConfig) string {
 
 // GenerateOrderJSON creates realistic order data in JSON Lines format (unified schema)
 func GenerateOrderJSON(config DataGeneratorConfig) string {
-	contextLogger := log.NewContextLogger(config.ContextName)
+	contextLogger := doris.NewContextLogger(config.ContextName)
 	contextLogger.Infof("Generating %d JSON order records...", config.BatchSize)
 	start := time.Now()
 	

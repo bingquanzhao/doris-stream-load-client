@@ -10,7 +10,6 @@ import (
 	"time"
 
 	doris "github.com/bingquanzhao/doris-stream-load-client"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 // workerFunction simulates a worker that loads data concurrently
@@ -18,7 +17,7 @@ func workerFunction(workerID int, client *doris.DorisLoadClient, wg *sync.WaitGr
 	defer wg.Done()
 
 	// Create context logger for this worker
-	workerLogger := log.NewContextLogger(fmt.Sprintf("Worker-%d", workerID))
+	workerLogger := doris.NewContextLogger(fmt.Sprintf("Worker-%d", workerID))
 
 	// Generate unique order data for this worker using unified schema
 	data := GenerateSimpleOrderCSV(workerID)
@@ -55,9 +54,11 @@ func RunBasicConcurrentExample() {
 	fmt.Println("=== Basic Concurrent Loading Demo ===")
 
 	// Enhanced logging configuration
-	log.SetLevel(log.LevelInfo)
+	doris.SetLogLevel(doris.LogLevelInfo)
 
-	log.Infof("Starting concurrent loading demo with enhanced logging")
+	// 我们不能直接调用log.Infof，所以先创建一个context logger
+	logger := doris.NewContextLogger("ConcurrentDemo")
+	logger.Infof("Starting concurrent loading demo with enhanced logging")
 
 	// Create load setting - optimized for demo purposes
 	setting := doris.NewLoadSetting().
@@ -75,11 +76,11 @@ func RunBasicConcurrentExample() {
 	// Create client (this is thread-safe and can be shared across goroutines)
 	client, err := doris.NewLoadClient(setting)
 	if err != nil {
-		log.Errorf("Failed to create load client: %v", err)
+		logger.Errorf("Failed to create load client: %v", err)
 		return
 	}
 
-	log.Infof("✅ Load client created successfully")
+	logger.Infof("✅ Load client created successfully")
 
 	// Demonstrate concurrent loading with multiple workers
 	const numWorkers = 5

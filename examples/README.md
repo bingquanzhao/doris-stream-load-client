@@ -74,6 +74,27 @@ Retry(doris.NewRetry(5, 1000))  // 5 retries: [1s, 2s, 4s, 8s, 16s] = ~31s total
 SetLabelPrefix("prod_orders")
 ```
 
+### Log Control (Unified API)
+
+All log control through main package - no additional imports needed:
+
+```go
+// Set log level for examples
+doris.SetLogLevel(doris.LogLevelError)  // Only show errors
+doris.SetLogLevel(doris.LogLevelInfo)   // Show info/warn/error (recommended)
+
+// Create context loggers for concurrent scenarios
+workerLogger := doris.NewContextLogger("Worker-1")
+workerLogger.Infof("Processing %d records", count)
+
+// Disable all logging
+doris.DisableLogging()
+
+// Integrate with custom logging systems
+logger := logrus.New()
+doris.SetCustomLogFuncs(logger.Debugf, logger.Infof, logger.Warnf, logger.Errorf)
+```
+
 ## 📈 Performance
 
 | Example | Generation Rate | Typical Load Time | Total Throughput |
