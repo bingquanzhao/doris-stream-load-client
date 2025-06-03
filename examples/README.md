@@ -29,19 +29,22 @@ go run cmd/examples/main.go all
 All examples use consistent **orders** table schema:
 
 ```sql
-CREATE TABLE orders (
-    order_id INT,
-    customer_id INT,
-    product_name STRING,
-    category STRING,
-    brand STRING,
-    quantity INT,
-    unit_price DECIMAL(10,2),
-    total_amount DECIMAL(10,2),
-    status STRING,
-    order_date DATETIME,
-    region STRING
-)
+create table `orders`
+(
+    OrderID     varchar(200),
+    CustomerID  varchar(200),
+    ProductName varchar(200),
+    Category    varchar(200),
+    Brand       varchar(200),
+    Quantity    varchar(200),
+    UnitPrice   varchar(200),
+    TotalAmount varchar(200),
+    Status      varchar(200),
+    OrderDate   varchar(200),
+    Region      varchar(200)
+) duplicate key(OrderID)
+distributed by hash(OrderID) buckets 10
+properties("replication_num"="1");
 ```
 
 ## ⚙️ Configuration
@@ -91,20 +94,22 @@ CREATE DATABASE IF NOT EXISTS test;
 
 -- Create orders table
 USE test;
-CREATE TABLE IF NOT EXISTS orders (
-    order_id INT,
-    customer_id INT,
-    product_name STRING,
-    category STRING,
-    brand STRING,
-    quantity INT,
-    unit_price DECIMAL(10,2),
-    total_amount DECIMAL(10,2),
-    status STRING,
-    order_date DATETIME,
-    region STRING
-) DUPLICATE KEY(order_id)
-DISTRIBUTED BY HASH(order_id) BUCKETS 10;
+create table `orders`
+(
+    OrderID     varchar(200),
+    CustomerID  varchar(200),
+    ProductName varchar(200),
+    Category    varchar(200),
+    Brand       varchar(200),
+    Quantity    varchar(200),
+    UnitPrice   varchar(200),
+    TotalAmount varchar(200),
+    Status      varchar(200),
+    OrderDate   varchar(200),
+    Region      varchar(200)
+) duplicate key(OrderID)
+distributed by hash(OrderID) buckets 10
+properties("replication_num"="1");
 ```
 
 ## 💡 Usage Tips
