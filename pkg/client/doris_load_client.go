@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/apache/doris-stream-load-client/pkg/config"
-	"github.com/apache/doris-stream-load-client/pkg/load"
-	"github.com/apache/doris-stream-load-client/pkg/log"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/config"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/load"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 // Pre-compiled error patterns for efficient matching

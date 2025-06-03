@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/apache/doris-stream-load-client/pkg/log"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 	"io"
 	"net/http"
 )

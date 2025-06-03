@@ -13,7 +13,7 @@
 ## 📦 安装
 
 ```bash
-go get github.com/apache/doris-stream-load-client
+go get github.com/bingquanzhao/doris-stream-load-client
 ```
 
 ## 🎯 快速开始
@@ -25,7 +25,7 @@ package main
 
 import (
 	"fmt"
-	doris "github.com/apache/doris-stream-load-client"
+	doris "github.com/bingquanzhao/doris-stream-load-client"
 )
 
 func main() {

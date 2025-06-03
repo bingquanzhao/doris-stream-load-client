@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/apache/doris-stream-load-client/examples"
+	"github.com/bingquanzhao/doris-stream-load-client/examples"
 )
 
 const usage = `

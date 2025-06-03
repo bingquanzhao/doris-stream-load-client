@@ -5,7 +5,7 @@ Doris Stream Load Client 提供简单易用的日志系统，支持自定义集�
 ## 基本使用
 
 ```go
-import "github.com/apache/doris-stream-load-client/pkg/log"
+import "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 
 // 基本日志记录
 log.Debugf("Processing batch with %d records", count)
@@ -18,12 +18,18 @@ log.Debug("Starting load process")
 log.Info("Load completed")
 log.Warn("Connection unstable")
 log.Error("Load failed")
+
+func main() {
+    log.Info("这是一条信息日志")
+    log.Error("这是一条错误日志")
+    log.Warn("这是一条警告日志")
+}
 ```
 
 ## 设置日志级别
 
 ```go
-import "github.com/apache/doris-stream-load-client/pkg/log"
+import "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 
 // 设置最低日志级别
 log.SetLevel(log.LevelInfo)  // 只记录 Info, Warn, Error
@@ -42,7 +48,7 @@ log.SetLevel(log.LevelError) // 只记录 Error
 ```go
 import (
     "os"
-    "github.com/apache/doris-stream-load-client/pkg/log"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 // 输出到文件
@@ -60,7 +66,7 @@ log.SetOutput(os.Stderr)
 ```go
 import (
     "log/slog"
-    "github.com/apache/doris-stream-load-client/pkg/log"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 logger := slog.Default()
@@ -79,7 +85,7 @@ log.SetErrorFunc(func(format string, args ...interface{}) {
 ```go
 import (
     "github.com/sirupsen/logrus"
-    "github.com/apache/doris-stream-load-client/pkg/log"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 logger := logrus.New()
@@ -95,7 +101,7 @@ log.SetDebugFunc(logger.Debugf)
 ```go
 import (
     "go.uber.org/zap"
-    "github.com/apache/doris-stream-load-client/pkg/log"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 logger, _ := zap.NewProduction()
@@ -110,7 +116,7 @@ log.SetDebugFunc(sugar.Debugf)
 ## 禁用日志
 
 ```go
-import "github.com/apache/doris-stream-load-client/pkg/log"
+import "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 
 // 方法1：设置高级别
 log.SetLevel(log.Level(999))
@@ -172,3 +178,51 @@ log.SetErrorFunc(func(format string, args ...interface{}) {
 - **Goroutine ID**：`[G-1]` 用于并发追踪
 - **位置**：`[main.go:60]` 源码位置
 - **消息**：具体日志内容 
+
+## 集成自定义日志库
+
+### 1. Logrus 集成
+
+```go
+import "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+
+// ... existing code ...
+
+```go
+package main
+
+import (
+    "os"
+    "github.com/sirupsen/logrus"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+)
+
+// ... existing code ...
+
+```go
+package main
+
+import (
+    "go.uber.org/zap"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+)
+
+// ... existing code ...
+
+```go
+package main
+
+import (
+    "log/slog"
+    "os"
+    "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+)
+
+// ... existing code ...
+
+## 生产环境最佳实践
+
+```go
+import "github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+
+// ... existing code ...

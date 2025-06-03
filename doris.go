@@ -6,9 +6,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/apache/doris-stream-load-client/pkg/client"
-	"github.com/apache/doris-stream-load-client/pkg/config"
-	"github.com/apache/doris-stream-load-client/pkg/load"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/client"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/config"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/load"
 	jsoniter "github.com/json-iterator/go"
 )
 

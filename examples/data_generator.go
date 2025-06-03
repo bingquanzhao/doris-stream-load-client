@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apache/doris-stream-load-client/pkg/log"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 // Common data for generating realistic order test data

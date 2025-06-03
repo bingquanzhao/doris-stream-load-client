@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	doris "github.com/apache/doris-stream-load-client"
-	"github.com/apache/doris-stream-load-client/pkg/log"
+	doris "github.com/bingquanzhao/doris-stream-load-client"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
 )
 
 const (

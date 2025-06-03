@@ -2,14 +2,14 @@ package load
 
 import (
 	"fmt"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/config"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/exception"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
+	"github.com/bingquanzhao/doris-stream-load-client/pkg/util"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/apache/doris-stream-load-client/pkg/config"
-	"github.com/apache/doris-stream-load-client/pkg/exception"
-	"github.com/apache/doris-stream-load-client/pkg/log"
-	"github.com/apache/doris-stream-load-client/pkg/util"
 	jsoniter "github.com/json-iterator/go"
 )
 

@@ -1,4 +1,4 @@
-module github.com/apache/doris-stream-load-client
+module github.com/bingquanzhao/doris-stream-load-client
 
 go 1.20
 
