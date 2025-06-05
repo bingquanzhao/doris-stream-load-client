@@ -22,7 +22,6 @@
 go get github.com/bingquanzhao/go-doris-sdk
 ```
 
-## 🎯 5 分钟上手
 
 ### 基础 CSV 加载
 
@@ -37,7 +36,7 @@ import (
 func main() {
 	// 🎯 新版 API：直接构造配置
 	config := &doris.Config{
-		Endpoints:   []string{"http://127.0.0.1:8630"},
+		Endpoints:   []string{"http://127.0.0.1:8030"},
 		User:        "root",
 		Password:    "password",
 		Database:    "test_db",
@@ -72,7 +71,7 @@ func main() {
 
 ```go
 config := &doris.Config{
-	Endpoints:   []string{"http://127.0.0.1:8630"},
+	Endpoints:   []string{"http://127.0.0.1:8030"},
 	User:        "root",
 	Password:    "password", 
 	Database:    "test_db",
@@ -303,7 +302,7 @@ doris.SetCustomLogFuncs(
 
 ## 📈 生产级示例
 
-我们提供了完整的生产级示例，包含性能测试和最佳实践：
+我们提供了完整的生产级示例
 
 ```bash
 # 运行所有示例
@@ -315,14 +314,6 @@ go run cmd/examples/main.go concurrent  # 并发加载 (100万条, 10 workers)
 go run cmd/examples/main.go json        # JSON 加载 (5万条)
 go run cmd/examples/main.go basic       # 基础并发 (5 workers)
 ```
-
-### 性能参考
-
-| 示例类型 | 数据量 | 并发数 | 典型耗时 | 吞吐量 |
-|---------|-------|-------|----------|--------|
-| 单批量 | 10万条 | 1 | 2-5秒 | 2-5万条/秒 |
-| 并发 | 100万条 | 10 | 10-30秒 | 3-10万条/秒 |
-| JSON | 5万条 | 1 | 2-4秒 | 1.2-2.5万条/秒 |
 
 ## 🛠️ 实用工具
 
@@ -360,78 +351,8 @@ customRetry := doris.NewRetry(3, 1000) // 3次重试，1秒基础间隔
 - 🔍 [Reader 并发分析](docs/READER_CONCURRENCY_ANALYSIS.md) - Reader 使用最佳实践
 - 📝 [示例详解](examples/README.md) - 所有示例的详细说明
 
-## ❓ 常见问题
 
-### Q: 为什么启用 Group Commit 后我的 Label 被忽略了？
-
-A: Doris 的 Group Commit 模式不支持自定义 Label，SDK 会自动忽略并记录警告日志：
-
-```go
-// 这种配置会触发警告
-config := &doris.Config{
-	Label:       "my_label",    // ⚠️ 会被忽略
-	GroupCommit: doris.ASYNC,   // Group Commit 启用
-}
-```
-
-### Q: 如何处理大量数据加载？
-
-A: 建议使用分批 + 并发的方式：
-
-```go
-// 1. 按批次分割数据 (10万条/批)
-// 2. 使用 5-10 个并发 worker  
-// 3. 启用 ASYNC Group Commit
-config.GroupCommit = doris.ASYNC
-```
-
-### Q: 遇到连接超时怎么办？
-
-A: 增加超时配置和重试次数：
-
-```go
-config.Options = map[string]string{
-	"timeout": "7200",  // 2小时超时
-}
-config.Retry = &doris.Retry{
-	MaxRetryTimes:  5,
-	MaxTotalTimeMs: 300000, // 5分钟总重试时间
-}
-```
-
-### Q: 如何调试数据格式问题？
-
-A: 启用严格模式和调试日志：
-
-```go
-doris.SetLogLevel(doris.LogLevelDebug)
-config.Options = map[string]string{
-	"strict_mode": "true",
-}
-```
-
-## 🔧 系统要求
-
-- **Go 版本**: 1.19 或更高版本
-- **Doris 版本**: 1.2+ (支持 Stream Load API)
-- **网络**: 确保可访问 Doris FE 节点的 8630 端口
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！请查看 [贡献指南](CONTRIBUTING.md) 了解详情。
 
 ## 📄 许可证
 
 本项目采用 [Apache License 2.0](LICENSE) 许可证。
-
----
-
-<div align="center">
-
-**⭐ 如果这个项目对你有帮助，请给我们一个 Star！**
-
-[🐛 报告 Bug](https://github.com/bingquanzhao/go-doris-sdk/issues) • 
-[✨ 功能请求](https://github.com/bingquanzhao/go-doris-sdk/issues) • 
-[📖 文档](https://github.com/bingquanzhao/go-doris-sdk/tree/main/docs)
-
-</div> 
