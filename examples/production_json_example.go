@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	doris "github.com/bingquanzhao/doris-stream-load-client"
+	doris "github.com/bingquanzhao/go-doris-sdk"
 )
 
 const (
@@ -19,57 +19,55 @@ const (
 // RunJSONExample demonstrates production-level JSON data loading
 func RunJSONExample() {
 	fmt.Println("=== Production-Level JSON Data Loading Demo ===")
-	
+
 	doris.SetLogLevel(doris.LogLevelInfo)
-	
+
 	logger := doris.NewContextLogger("JSONDemo")
 	logger.Infof("Starting JSON loading demo with %d order records", JSON_BATCH_SIZE)
-	
-	// Production-level JSON configuration
-	setting := doris.NewLoadSetting().
-		AddFeNodes("http://10.16.10.6:8630").
-		SetUser("root").
-		SetPassword("123456").
-		Database("test").
-		Table("orders"). // Unified orders table
-		SetLabelPrefix("prod_json").
-		// JSON Lines format configuration
-		JsonFormat(doris.JsonObjectLine). // Each line is a JSON object
-		// Production retry configuration
-		Retry(doris.NewRetry(3, 2000)).
-		// ASYNC batch mode for better JSON processing performance
-		BatchMode(doris.ASYNC)
-	
+
+	// Production-level JSON configuration using direct struct construction
+	config := &doris.Config{
+		Endpoints:   []string{"http://10.16.10.6:8630"},
+		User:        "root",
+		Password:    "123456",
+		Database:    "test",
+		Table:       "orders", // Unified orders table
+		LabelPrefix: "prod_json",
+		Format:      &doris.JSONFormat{Type: doris.JSONObjectLine}, // JSON Lines format
+		Retry:       doris.NewRetry(3, 2000),                       // Custom retry: 3 attempts, 2s base interval
+		GroupCommit: doris.ASYNC,                                   // ASYNC mode for better JSON processing
+	}
+
 	// Create client with automatic validation
-	client, err := doris.NewLoadClient(setting)
+	client, err := doris.NewLoadClient(config)
 	if err != nil {
 		logger.Errorf("Failed to create load client: %v", err)
 		return
 	}
-	
+
 	logger.Infof("✅ JSON load client created successfully")
-	
+
 	// Generate realistic JSON order data using unified data generator
-	config := DataGeneratorConfig{
+	genConfig := DataGeneratorConfig{
 		BatchSize:   JSON_BATCH_SIZE,
 		ContextName: "JSON-DataGen",
 	}
-	jsonData := GenerateOrderJSON(config)
-	
+	jsonData := GenerateOrderJSON(genConfig)
+
 	// Perform the JSON load operation
 	logger.Infof("Starting JSON load operation for %d order records...", JSON_BATCH_SIZE)
 	loadStart := time.Now()
-	
+
 	response, err := client.Load(doris.StringReader(jsonData))
-	
+
 	loadTime := time.Since(loadStart)
-	
+
 	// Simple response handling
 	if err != nil {
 		fmt.Printf("❌ JSON load failed: %v\n", err)
 		return
 	}
-	
+
 	if response != nil && response.Status == doris.SUCCESS {
 		fmt.Printf("🎉 JSON load completed successfully!\n")
 		fmt.Printf("📊 JSON Records: %d, Size: %.1f MB, Time: %v\n", JSON_BATCH_SIZE, float64(len(jsonData))/1024/1024, loadTime)
@@ -84,6 +82,6 @@ func RunJSONExample() {
 	} else {
 		fmt.Printf("❌ JSON load failed with status: %v\n", response.Status)
 	}
-	
+
 	fmt.Println("=== JSON Demo Complete ===")
-} 
+}

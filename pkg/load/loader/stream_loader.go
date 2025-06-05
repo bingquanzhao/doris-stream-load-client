@@ -2,55 +2,33 @@ package load
 
 import (
 	"fmt"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/config"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/exception"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/log"
-	"github.com/bingquanzhao/doris-stream-load-client/pkg/util"
 	"io"
 	"net/http"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
-)
+	"github.com/bingquanzhao/go-doris-sdk/pkg/load/exception"
+	"github.com/bingquanzhao/go-doris-sdk/pkg/load/log"
+	"github.com/bingquanzhao/go-doris-sdk/pkg/load/util"
 
-const (
-	// LoadURLPattern is the URL pattern for stream load API
-	LoadURLPattern = "http://%s/api/%s/%s/_stream_load"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // StreamLoader handles loading data into Doris via HTTP stream load
 type StreamLoader struct {
-	httpClient   *http.Client
-	json         jsoniter.API
-	loadURL      string
-	loadSettings *config.LoadSetting
+	httpClient *http.Client
+	json       jsoniter.API
 }
 
-// NewStreamLoader creates a new StreamLoader instance
-func NewStreamLoader(loadSettings *config.LoadSetting) *StreamLoader {
-	// Construct the load URL
-	loadURL := fmt.Sprintf(LoadURLPattern, loadSettings.GetEndpoint(), loadSettings.GetDatabase(), loadSettings.GetTable())
-
-	// Get shared HTTP client
-	httpClient := util.GetHttpClient()
-
+// NewStreamLoader creates a new StreamLoader
+func NewStreamLoader() *StreamLoader {
 	return &StreamLoader{
-		httpClient:   httpClient,
-		json:         jsoniter.ConfigCompatibleWithStandardLibrary,
-		loadURL:      loadURL,
-		loadSettings: loadSettings,
+		httpClient: util.GetHttpClient(),
+		json:       jsoniter.ConfigCompatibleWithStandardLibrary,
 	}
 }
 
-// Load sends data to Doris via HTTP stream load
-func (s *StreamLoader) Load(reader io.Reader) (*LoadResponse, error) {
-	// Create request
-	req, err := s.createRequest(reader)
-	if err != nil {
-		log.Errorf("Failed to create HTTP request: %v", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
+// Load sends the HTTP request to Doris via stream load
+func (s *StreamLoader) Load(req *http.Request) (*LoadResponse, error) {
 	// Execute the request
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -61,32 +39,6 @@ func (s *StreamLoader) Load(reader io.Reader) (*LoadResponse, error) {
 
 	// Handle the response
 	return s.handleResponse(resp)
-}
-
-// createRequest creates an HTTP request
-func (s *StreamLoader) createRequest(body io.Reader) (*http.Request, error) {
-	options := s.loadSettings.GetOptions()
-
-	// Create a new HTTP PUT builder for each request to ensure thread safety
-	httpPutBuilder := NewHttpPutBuilder()
-	httpPutBuilder.SetUrl(s.loadURL)
-	httpPutBuilder.BaseAuth(s.loadSettings.GetUser(), s.loadSettings.GetPassword())
-	httpPutBuilder.AddCommonHeader()
-	httpPutBuilder.SetLabel(s.loadSettings.GetLabel()) // Generate unique label for each request
-
-	// Add headers from the snapshot instead of calling GetOptions() again
-	httpPutBuilder.AddProperties(options)
-
-	// Use streaming approach - no need to read all data into memory
-	httpPutBuilder.SetReader(body)
-
-	// Build request
-	req, err := httpPutBuilder.Build()
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
 }
 
 // handleResponse processes the HTTP response from a stream load request

@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	doris "github.com/bingquanzhao/doris-stream-load-client"
+	doris "github.com/bingquanzhao/go-doris-sdk"
 )
 
 const (
@@ -47,21 +47,20 @@ func RunConcurrentExample() {
 		TOTAL_RECORDS, NUM_WORKERS, RECORDS_PER_WORKER)
 
 	// Production-level configuration optimized for concurrent loads
-	setting := doris.NewLoadSetting().
-		AddFeNodes("http://10.16.10.6:8630").
-		SetUser("root").
-		SetPassword("123456").
-		Database("test").
-		Table("orders"). // Unified orders table
-		SetLabelPrefix("prod_concurrent").
-		CsvFormat(",", "\\n").
-		// Optimized retry configuration for production concurrent loads
-		Retry(doris.NewRetry(5, 1000)). // 5 retries with 1s base interval
-		// ASYNC batch mode for maximum throughput
-		BatchMode(doris.ASYNC)
+	config := &doris.Config{
+		Endpoints:   []string{"http://10.16.10.6:8630"},
+		User:        "root",
+		Password:    "123456",
+		Database:    "test",
+		Table:       "orders", // Unified orders table
+		LabelPrefix: "prod_concurrent",
+		Format:      doris.DefaultCSVFormat(), // Default CSV format
+		Retry:       doris.NewRetry(5, 1000),  // 5 retries with 1s base interval
+		GroupCommit: doris.ASYNC,              // ASYNC mode for maximum throughput
+	}
 
 	// Create shared client (thread-safe)
-	client, err := doris.NewLoadClient(setting)
+	client, err := doris.NewLoadClient(config)
 	if err != nil {
 		fmt.Printf("Failed to create load client: %v\n", err)
 		return
@@ -129,12 +128,12 @@ func loadWorker(workerID int, client *doris.DorisLoadClient, globalStats *Global
 	overallStart := time.Now()
 
 	// Generate data for this worker using unified data generator
-	config := DataGeneratorConfig{
+	genConfig := DataGeneratorConfig{
 		WorkerID:    workerID,
 		BatchSize:   RECORDS_PER_WORKER,
 		ContextName: fmt.Sprintf("DataGen-W%d", workerID),
 	}
-	data := GenerateOrderCSV(config)
+	data := GenerateOrderCSV(genConfig)
 	stats.DataSize = int64(len(data))
 
 	// Perform the load operation

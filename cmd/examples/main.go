@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bingquanzhao/doris-stream-load-client/examples"
+	"github.com/bingquanzhao/go-doris-sdk/examples"
 )
 
 const usage = `
@@ -88,10 +88,10 @@ func main() {
 	}
 
 	exampleName := os.Args[1]
-	
+
 	// Show what we're about to run
 	fmt.Printf("📋 Selected example: %s\n", exampleName)
 	fmt.Println(strings.Repeat("-", 50))
-	
+
 	runExample(exampleName)
-} 
+}

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	doris "github.com/bingquanzhao/doris-stream-load-client"
+	doris "github.com/bingquanzhao/go-doris-sdk"
 )
 
 // workerFunction simulates a worker that loads data concurrently
@@ -60,21 +60,21 @@ func RunBasicConcurrentExample() {
 	logger := doris.NewContextLogger("ConcurrentDemo")
 	logger.Infof("Starting concurrent loading demo with enhanced logging")
 
-	// Create load setting - optimized for demo purposes
-	setting := doris.NewLoadSetting().
-		AddFeNodes("http://10.16.10.6:8630").
-		SetUser("root").
-		SetPassword("123456").
-		Database("test").
-		Table("orders"). // Unified orders table
-		SetLabelPrefix("demo_concurrent").
-		CsvFormat(",", "\\n").
-		// Use default retry with exponential backoff
-		Retry(doris.NewDefaultRetry()). // 5 retries: [1s, 2s, 4s, 8s, 16s] = ~31s total
-		BatchMode(doris.ASYNC)
+	// Create configuration using direct struct construction
+	config := &doris.Config{
+		Endpoints:   []string{"http://10.16.10.6:8630"},
+		User:        "root",
+		Password:    "123456",
+		Database:    "test",
+		Table:       "orders", // Unified orders table
+		LabelPrefix: "demo_concurrent",
+		Format:      doris.DefaultCSVFormat(), // 使用默认 CSV 格式
+		Retry:       doris.DefaultRetry(),     // 6 retries: [1s, 2s, 4s, 8s, 16s, 32s] = ~63s total
+		GroupCommit: doris.ASYNC,
+	}
 
 	// Create client (this is thread-safe and can be shared across goroutines)
-	client, err := doris.NewLoadClient(setting)
+	client, err := doris.NewLoadClient(config)
 	if err != nil {
 		logger.Errorf("Failed to create load client: %v", err)
 		return

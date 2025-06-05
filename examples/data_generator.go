@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	doris "github.com/bingquanzhao/doris-stream-load-client"
+	doris "github.com/bingquanzhao/go-doris-sdk"
 )
 
 // Common data for generating realistic order test data
@@ -19,7 +19,7 @@ var (
 	Brands     = []string{"Apple", "Samsung", "Nike", "Adidas", "Sony", "LG", "Canon", "Dell", "HP", "Xiaomi", "Huawei", "Lenovo"}
 	Statuses   = []string{"active", "inactive", "pending", "discontinued", "completed", "cancelled"}
 	Regions    = []string{"North", "South", "East", "West", "Central"}
-	
+
 	// Additional data for variety
 	Countries = []string{"US", "CN", "JP", "DE", "UK", "FR", "CA", "AU", "IN", "BR"}
 	Devices   = []string{"mobile", "desktop", "tablet"}
@@ -42,10 +42,10 @@ type OrderRecord struct {
 
 // DataGeneratorConfig holds configuration for data generation
 type DataGeneratorConfig struct {
-	WorkerID     int    // For concurrent scenarios
-	BatchSize    int    // Number of records to generate
-	ContextName  string // For logging context
-	RandomSeed   int64  // For reproducible random data
+	WorkerID    int    // For concurrent scenarios
+	BatchSize   int    // Number of records to generate
+	ContextName string // For logging context
+	RandomSeed  int64  // For reproducible random data
 }
 
 // GenerateOrderCSV creates realistic order data in CSV format (unified for all examples)
@@ -110,7 +110,7 @@ func GenerateOrderCSV(config DataGeneratorConfig) string {
 	generationTime := time.Since(start)
 	dataSize := builder.Len()
 	contextLogger.Infof("Order data generation completed: %d records, %d bytes, took %v", config.BatchSize, dataSize, generationTime)
-	contextLogger.Infof("Generation rate: %.0f records/sec, %.1f MB/sec", 
+	contextLogger.Infof("Generation rate: %.0f records/sec, %.1f MB/sec",
 		float64(config.BatchSize)/generationTime.Seconds(),
 		float64(dataSize)/1024/1024/generationTime.Seconds())
 
@@ -122,12 +122,12 @@ func GenerateOrderJSON(config DataGeneratorConfig) string {
 	contextLogger := doris.NewContextLogger(config.ContextName)
 	contextLogger.Infof("Generating %d JSON order records...", config.BatchSize)
 	start := time.Now()
-	
+
 	// Pre-allocate builder for memory efficiency
 	estimatedSize := config.BatchSize * 300 // JSON records are larger
 	var builder strings.Builder
 	builder.Grow(estimatedSize)
-	
+
 	// Worker-specific random seed
 	seed := config.RandomSeed
 	if seed == 0 {
@@ -135,7 +135,7 @@ func GenerateOrderJSON(config DataGeneratorConfig) string {
 	}
 	rng := rand.New(rand.NewSource(seed))
 	baseOrderID := config.WorkerID * config.BatchSize
-	
+
 	for i := 1; i <= config.BatchSize; i++ {
 		quantity := rng.Intn(10) + 1
 		unitPrice := float64(rng.Intn(50000)) / 100.0 // $0.01 to $500.00
@@ -154,7 +154,7 @@ func GenerateOrderJSON(config DataGeneratorConfig) string {
 			OrderDate:   time.Now().Add(-time.Duration(rng.Intn(365*24)) * time.Hour).Format("2006-01-02T15:04:05Z"),
 			Region:      Regions[rng.Intn(len(Regions))],
 		}
-		
+
 		// Manual JSON construction for better control
 		jsonRecord := fmt.Sprintf(`{"OrderID":%d,"CustomerID":%d,"ProductName":"%s","Category":"%s","Brand":"%s","Quantity":%d,"UnitPrice":%.2f,"TotalAmount":%.2f,"Status":"%s","OrderDate":"%s","Region":"%s"}`,
 			record.OrderID,
@@ -169,23 +169,23 @@ func GenerateOrderJSON(config DataGeneratorConfig) string {
 			record.OrderDate,
 			record.Region,
 		)
-		
+
 		builder.WriteString(jsonRecord)
 		builder.WriteString("\n") // JSON lines format
-		
+
 		// Progress indicator for large datasets
 		if i%10000 == 0 {
 			contextLogger.Infof("Generated %d/%d JSON records (%.1f%%)", i, config.BatchSize, float64(i)/float64(config.BatchSize)*100)
 		}
 	}
-	
+
 	generationTime := time.Since(start)
 	dataSize := builder.Len()
 	contextLogger.Infof("JSON order data generation completed: %d records, %d bytes, took %v", config.BatchSize, dataSize, generationTime)
-	contextLogger.Infof("Generation rate: %.0f records/sec, %.1f MB/sec", 
+	contextLogger.Infof("Generation rate: %.0f records/sec, %.1f MB/sec",
 		float64(config.BatchSize)/generationTime.Seconds(),
 		float64(dataSize)/1024/1024/generationTime.Seconds())
-	
+
 	return builder.String()
 }
 
@@ -194,12 +194,12 @@ func GenerateSimpleOrderCSV(workerID int) string {
 	quantity := 1
 	unitPrice := 10.0 + float64(workerID)
 	totalAmount := float64(quantity) * unitPrice
-	
+
 	return fmt.Sprintf("order_id,customer_id,product_name,category,brand,quantity,unit_price,total_amount,status,order_date,region\n%d,%d,\"Product_%d\",Electronics,TestBrand,%d,%.2f,%.2f,active,2024-01-01 12:00:00,Central\n",
-		workerID, 
-		workerID+1000, 
-		workerID, 
-		quantity, 
-		unitPrice, 
+		workerID,
+		workerID+1000,
+		workerID,
+		quantity,
+		unitPrice,
 		totalAmount)
-} 
+}

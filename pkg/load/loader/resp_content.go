@@ -17,6 +17,18 @@ const (
 	SUCCESS
 )
 
+// String returns the string representation of LoadStatus
+func (s LoadStatus) String() string {
+	switch s {
+	case SUCCESS:
+		return "SUCCESS"
+	case FAILURE:
+		return "FAILURE"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 // RespContent represents the response from a stream load operation
 type RespContent struct {
 	TxnID                  int64  `json:"TxnId"`
