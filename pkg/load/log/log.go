@@ -45,19 +45,19 @@ func (l Level) String() string {
 var (
 	// Current minimum log level
 	currentLevel = LevelDebug
-	
+
 	// Enhanced logger with custom formatter
 	stdLogger = log.New(os.Stdout, "", 0) // Remove default flags, we'll format ourselves
-	
+
 	// Debug logging function - can be customized
 	DebugFunc LogFunc = defaultLogFunc(LevelDebug)
-	
+
 	// Info logging function - can be customized
 	InfoFunc LogFunc = defaultLogFunc(LevelInfo)
-	
+
 	// Warn logging function - can be customized
 	WarnFunc LogFunc = defaultLogFunc(LevelWarn)
-	
+
 	// Error logging function - can be customized
 	ErrorFunc LogFunc = defaultLogFunc(LevelError)
 )
@@ -87,15 +87,29 @@ func formatTimestamp() string {
 
 // getCallerInfo returns the file and line number of the caller
 func getCallerInfo() string {
-	_, file, line, ok := runtime.Caller(4) // Skip 4 levels: getCallerInfo -> defaultLogFunc -> Debug/Info/etc -> user code
-	if !ok {
-		return "unknown:0"
+	// We need to skip more levels to get to the actual caller
+	// Let's try different skip levels to find the right one
+	for skip := 3; skip <= 8; skip++ {
+		_, file, line, ok := runtime.Caller(skip)
+		if !ok {
+			continue
+		}
+
+		// Only show the filename, not the full path
+		if idx := strings.LastIndex(file, "/"); idx >= 0 {
+			file = file[idx+1:]
+		}
+
+		// Skip our own log package files and go runtime files
+		if !strings.Contains(file, "log.go") &&
+			!strings.Contains(file, "asm_") &&
+			!strings.Contains(file, "proc.go") {
+			return fmt.Sprintf("%s:%d", file, line)
+		}
 	}
-	// Only show the filename, not the full path
-	if idx := strings.LastIndex(file, "/"); idx >= 0 {
-		file = file[idx+1:]
-	}
-	return fmt.Sprintf("%s:%d", file, line)
+
+	// Fallback if we can't find the right caller
+	return "unknown:0"
 }
 
 // defaultLogFunc creates an enhanced logging function for the given level
@@ -106,17 +120,17 @@ func defaultLogFunc(level Level) LogFunc {
 			timestamp := formatTimestamp()
 			gid := getGoroutineID()
 			caller := getCallerInfo()
-			
+
 			var message string
 			if len(args) == 0 {
 				message = format
 			} else {
 				message = fmt.Sprintf(format, args...)
 			}
-			
-			logLine := fmt.Sprintf("[%s] [%s] [G-%d] [%s] %s", 
+
+			logLine := fmt.Sprintf("[%s] [%s] [G-%d] [%s] %s",
 				timestamp, level.String(), gid, caller, message)
-			
+
 			stdLogger.Output(1, logLine)
 		}
 	}
@@ -222,4 +236,4 @@ func (cl *ContextLogger) Warnf(format string, args ...interface{}) {
 // Errorf logs an error message with context
 func (cl *ContextLogger) Errorf(format string, args ...interface{}) {
 	Errorf("[%s] %s", cl.context, fmt.Sprintf(format, args...))
-} 
+}

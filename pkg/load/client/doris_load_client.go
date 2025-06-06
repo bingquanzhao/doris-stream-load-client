@@ -146,6 +146,9 @@ func calculateBackoffInterval(attempt int, baseIntervalMs int64, maxTotalTimeMs 
 
 // Load sends data to Doris via HTTP stream load with retry logic
 func (c *DorisLoadClient) Load(reader io.Reader) (*loader.LoadResponse, error) {
+	operationStartTime := time.Now()
+
+	// Step 1: Configuration preparation
 	retry := c.config.Retry
 	if retry == nil {
 		retry = &config.Retry{MaxRetryTimes: 6, BaseIntervalMs: 1000, MaxTotalTimeMs: 60000}
@@ -247,12 +250,12 @@ func (c *DorisLoadClient) Load(reader io.Reader) (*loader.LoadResponse, error) {
 			break
 		}
 
+		// Execute the actual load operation
 		response, lastErr = c.streamLoader.Load(req)
 
 		// If successful, return immediately
 		if lastErr == nil && response != nil && response.Status == loader.SUCCESS {
-			elapsedTime := time.Since(startTime)
-			log.Infof("Stream load operation completed successfully on attempt %d (total time: %v)", attempt+1, elapsedTime)
+			log.Infof("Stream load operation completed successfully on attempt %d", attempt+1)
 			return response, nil
 		}
 
@@ -289,17 +292,19 @@ func (c *DorisLoadClient) Load(reader io.Reader) (*loader.LoadResponse, error) {
 	}
 
 	// Final result logging
-	totalElapsedTime := time.Since(startTime)
+	totalOperationTime := time.Since(operationStartTime)
+	log.Debugf("[TIMING] Total operation time: %v", totalOperationTime)
+
 	if lastErr != nil {
-		log.Errorf("Stream load operation failed after %d attempts (total time: %v): %v", maxRetries+1, totalElapsedTime, lastErr)
+		log.Errorf("Stream load operation failed after %d attempts: %v", maxRetries+1, lastErr)
 		return response, lastErr
 	}
 
 	if response != nil {
-		log.Errorf("Stream load operation failed with final status: %v (total time: %v)", response.Status, totalElapsedTime)
+		log.Errorf("Stream load operation failed with final status: %v", response.Status)
 		return response, fmt.Errorf("load failed with status: %v", response.Status)
 	}
 
-	log.Errorf("Stream load operation failed with unknown error after %d attempts (total time: %v)", maxRetries+1, totalElapsedTime)
+	log.Errorf("Stream load operation failed with unknown error after %d attempts (total time: %v)", maxRetries+1)
 	return nil, fmt.Errorf("load failed: unknown error")
 }

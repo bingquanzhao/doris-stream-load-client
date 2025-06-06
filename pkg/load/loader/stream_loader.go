@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bingquanzhao/go-doris-sdk/pkg/load/exception"
 	"github.com/bingquanzhao/go-doris-sdk/pkg/load/log"
@@ -29,7 +30,9 @@ func NewStreamLoader() *StreamLoader {
 
 // Load sends the HTTP request to Doris via stream load
 func (s *StreamLoader) Load(req *http.Request) (*LoadResponse, error) {
-	// Execute the request
+	// Execute the request - this is the main performance bottleneck
+	log.Debugf("[TIMING] Sending HTTP request...")
+	requestStartTime := time.Now()
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		log.Errorf("Failed to execute HTTP request: %v", err)
@@ -37,8 +40,13 @@ func (s *StreamLoader) Load(req *http.Request) (*LoadResponse, error) {
 	}
 	defer resp.Body.Close()
 
+	requestDuration := time.Since(requestStartTime)
+	log.Debugf("[TIMING] HTTP request completed: %v", requestDuration)
+
 	// Handle the response
-	return s.handleResponse(resp)
+	result, err := s.handleResponse(resp)
+
+	return result, err
 }
 
 // handleResponse processes the HTTP response from a stream load request
@@ -79,6 +87,7 @@ func (s *StreamLoader) handleResponse(resp *http.Response) (*LoadResponse, error
 			} else {
 				errorMessage = string(body)
 			}
+
 			return &LoadResponse{
 				Status:       FAILURE,
 				Resp:         respContent,
@@ -89,6 +98,7 @@ func (s *StreamLoader) handleResponse(resp *http.Response) (*LoadResponse, error
 
 	// For non-200 status codes, return an error that can be retried
 	log.Errorf("Stream load failed with HTTP status: %s", resp.Status)
+
 	return nil, exception.NewStreamLoadError(fmt.Sprintf("stream load error: %s", resp.Status))
 }
 
