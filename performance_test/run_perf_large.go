@@ -22,14 +22,6 @@ func main() {
 
 	// 计算基本信息
 	totalBatches := (totalRecords + int64(batchSize) - 1) / int64(batchSize)
-	estimatedDataSize := float64(totalRecords) * 111.8 / 1024 / 1024 / 1024 // 每条记录约111.8字节
-
-	fmt.Printf("📋 测试配置:\n")
-	fmt.Printf("   总数据量: %s 条记录\n", formatNumber(totalRecords))
-	fmt.Printf("   批次大小: %s 条/批\n", formatNumber(int64(batchSize)))
-	fmt.Printf("   预估总批次: %s 批\n", formatNumber(totalBatches))
-	fmt.Printf("   并发级别: %v\n", concurrencies)
-	fmt.Printf("   预估数据大小: %.2f GB\n", estimatedDataSize)
 
 	// Doris配置
 	config := &doris.Config{
@@ -56,7 +48,20 @@ func main() {
 	fmt.Printf("🔧 预生成测试数据 (%s 条)...\n", formatNumber(int64(batchSize)))
 	testData := generateTestData(0, 0, batchSize) // 使用固定参数生成标准数据
 	dataSize := int64(len(testData))
-	fmt.Printf("✅ 数据生成完成，单批数据大小: %.2f MB\n\n", float64(dataSize)/1024/1024)
+
+	// 基于真实数据计算总数据大小
+	singleRecordSize := float64(dataSize) / float64(batchSize)                     // 单条记录的真实大小
+	totalDataSize := float64(totalRecords) * singleRecordSize / 1024 / 1024 / 1024 // 总数据大小(GB)
+
+	fmt.Printf("✅ 数据生成完成，单批数据大小: %.2f MB\n", float64(dataSize)/1024/1024)
+	fmt.Printf("📏 单条记录实际大小: %.1f 字节\n", singleRecordSize)
+
+	fmt.Printf("\n📋 测试配置:\n")
+	fmt.Printf("   总数据量: %s 条记录\n", formatNumber(totalRecords))
+	fmt.Printf("   批次大小: %s 条/批\n", formatNumber(int64(batchSize)))
+	fmt.Printf("   总批次数: %s 批\n", formatNumber(totalBatches))
+	fmt.Printf("   并发级别: %v\n", concurrencies)
+	fmt.Printf("   预计数据大小: %.3f GB\n", totalDataSize)
 
 	// 存储结果
 	results := make([]TestResult, 0, len(concurrencies))
